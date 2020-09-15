@@ -36,7 +36,8 @@
   (sci/alter-var-root last-error (constantly e))
   (let [msg (ex-message e)]
     (.write term msg) (.write term "\r\n")
-    (when (str/includes? msg "allow")
+    (when (or (str/includes? msg "allow")
+              (str/includes? msg "realized"))
       (.write term "Type (disable-safety!) to drop restrictions.")
       (.write term "\r\n"))))
 
