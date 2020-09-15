@@ -1,6 +1,5 @@
-{
-  "dependencies": {
-    "local-echo": "janstuemmel/local-echo#fix-xtermjs4",
-    "xterm": "^4.7.0"
+{"dependencies": {
+  "local-echo": "babashka/local-echo",
+  "xterm": "^4.7.0"
   }
 }
