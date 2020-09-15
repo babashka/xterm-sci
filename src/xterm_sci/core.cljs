@@ -12,32 +12,49 @@
 (defonce await-more-input (atom false))
 (defonce last-ns (atom @sci/ns))
 (defonce last-error (sci/new-dynamic-var '*e nil))
-(defonce ctx (sci/init {:realize-max 1000
-                        :preset :termination-safe
-                        :classes {'js js/window}
-                        :namespaces {'clojure.core {'*e last-error
-                                                    'prn prn
-                                                    'println println}}}))
+(defonce ctx (atom nil))
+(defonce initial-opts {:realize-max 1000
+                       :preset :termination-safe
+                       :classes {'js js/window}
+                       :namespaces {'clojure.core {'*e last-error
+                                                   'prn prn
+                                                   'println println
+                                                   'enable-safety!
+                                                   (fn []
+                                                     (reset! ctx (sci/init initial-opts))
+                                                     nil)
+                                                   'disable-safety!
+                                                   (fn []
+                                                     (.write term "Type (enable-safety!) to re-instate restrictions.")
+                                                     (.write term "\r\n")
+                                                     (reset! ctx (sci/init (dissoc initial-opts :preset :realize-max)))
+                                                     nil)}}})
+
+(reset! ctx (sci/init initial-opts))
 
 (defn handle-error [last-error e]
   (sci/alter-var-root last-error (constantly e))
-  (.write term (ex-message e))
-  (.write term "\r\n"))
+  (let [msg (ex-message e)]
+    (.write term msg) (.write term "\r\n")
+    (when (str/includes? msg "allow")
+      (.write term "Type (disable-safety!) to drop restrictions.")
+      (.write term "\r\n"))))
 
 (defn read-form [line]
   (when-not (str/blank? line)
     (let [reader (sci/reader line)]
       (try
         (let [form (sci/with-bindings {sci/ns @last-ns}
-                     (sci/parse-next ctx reader))]
+                     (sci/parse-next @ctx reader))]
           (reset! last-form form))
         (catch :default e
-          (if (str/includes? (.-message e) "EOF while reading")
-            ::eof-while-reading
-            (do
-              (handle-error last-error e)
-              ;;we're done handling this input
-              ::sci/eof)))))))
+          (cond (str/includes? (.-message e) "EOF while reading")
+                ::eof-while-reading
+                :else
+                (do
+                  (handle-error last-error e)
+                  ;;we're done handling this input
+                  ::sci/eof)))))))
 
 (defonce line-discipline (local-echo-controller.
                           term #js
@@ -68,7 +85,7 @@
                           last-error @last-error}
         (when-not (= ::none @last-form)
           (let [ret (try
-                      (sci/eval-form ctx @last-form)
+                      (sci/eval-form @ctx @last-form)
                       (catch :default e
                         (handle-error last-error e)
                         ::err)
@@ -92,4 +109,5 @@
            (input-loop))))
 
 (defonce i ;; don't start another input loop on hot-reload
-  (input-loop))
+  (do (print-fn nil "Welcome to xterm-sci.")
+      (input-loop)))
