@@ -13,7 +13,7 @@
 (defonce last-ns (atom @sci/ns))
 (defonce last-error (sci/new-dynamic-var '*e nil))
 (defonce ctx (sci/init {:realize-max 1000
-                        :profile :termination-safe
+                        :preset :termination-safe
                         :classes {'js js/window}
                         :namespaces {'clojure.core {'*e last-error
                                                     'prn prn
