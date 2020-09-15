@@ -15,7 +15,9 @@
 (defonce ctx (sci/init {:realize-max 1000
                         :profile :termination-safe
                         :classes {'js js/window}
-                        :namespaces {'clojure.core {'*e last-error}}}))
+                        :namespaces {'clojure.core {'*e last-error
+                                                    'prn prn
+                                                    'println println}}}))
 
 (defn handle-error [last-error e]
   (sci/alter-var-root last-error (constantly e))
@@ -51,24 +53,33 @@
                       (str "Error while printing: " (pr-str e))))]
       (.write term (str printed "\r\n")))))
 
+(defn print-fn [sb v]
+  (if (and (instance? goog.string/StringBuffer @sci/out)
+           ;; we're in with-out-str
+           (not (identical? sb @sci/out)))
+    (.append @sci/out (str v "\n"))
+    (.write term (str v "\r\n"))))
+
 (defn eval! []
-  (sci/with-bindings {sci/ns @last-ns
-                      last-error @last-error
-                      sci/out (goog.string/StringBuffer.)}
-    (when-not (= ::none @last-form)
-      (let [ret (try
-                  (sci/eval-form ctx @last-form)
-                  (catch :default e
-                    (handle-error last-error e)
-                    ::err)
-                  (finally
-                    (let [output (str @sci/out)]
-                      (when-not (str/blank? output)
-                        (.write term
-                                (str/replace output #"\n$" "\r\n"))))))]
-        (when-not (= ::err ret) ;; do nothing, continue in input-loop
-          (print-val ret)
-          (reset! last-ns @sci/ns))))))
+  (let [sb (goog.string/StringBuffer.)]
+    (binding [*print-fn* (partial print-fn sb)]
+      (sci/with-bindings {sci/ns @last-ns
+                          sci/out sb ;; print and pr will print to sci/out
+                          last-error @last-error}
+        (when-not (= ::none @last-form)
+          (let [ret (try
+                      (sci/eval-form ctx @last-form)
+                      (catch :default e
+                        (handle-error last-error e)
+                        ::err)
+                      (finally
+                        (let [output (str sb)]
+                          (when-not (str/blank? output)
+                            (.write term
+                                    (str/replace output #"\n$" "\r\n"))))))]
+            (when-not (= ::err ret) ;; do nothing, continue in input-loop
+              (print-val ret)
+              (reset! last-ns @sci/ns))))))))
 
 (defn prompt []
   (if @await-more-input "> "
