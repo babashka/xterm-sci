@@ -26,7 +26,8 @@
   (when-not (str/blank? line)
     (let [reader (sci/reader line)]
       (try
-        (let [form (sci/parse-next ctx reader)]
+        (let [form (sci/with-bindings {sci/ns @last-ns}
+                     (sci/parse-next ctx reader))]
           (reset! last-form form))
         (catch :default e
           (if (str/includes? (.-message e) "EOF while reading")
