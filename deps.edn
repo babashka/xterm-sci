@@ -3,7 +3,7 @@
  :deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
   borkdude/sci        {:git/url "https://github.com/borkdude/sci"
-                       :sha "81a8d483462a1a4b487204846405a58e9f174c15"}}
+                       :sha "441f7762fec717df00e5b8a73692277ac7049672"}}
 
  :aliases
  {:dev
