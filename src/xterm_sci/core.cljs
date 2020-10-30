@@ -14,23 +14,11 @@
 (defonce last-ns (atom @sci/ns))
 (defonce last-error (sci/new-dynamic-var '*e nil))
 (defonce ctx (atom nil))
-(defonce initial-opts {:realize-max 1000
-                       :preset :termination-safe
-                       :classes {'js js/window}
+(defonce initial-opts {:classes {'js js/window}
                        :namespaces {'clojure.core
                                     {'*e last-error
                                      'prn prn
-                                     'println println
-                                     'enable-safety!
-                                     (fn []
-                                       (reset! ctx (sci/init initial-opts))
-                                       nil)
-                                     'disable-safety!
-                                     (fn []
-                                       (.write term "Type (enable-safety!) to re-instate restrictions.")
-                                       (.write term "\r\n")
-                                       (reset! ctx (sci/init (dissoc initial-opts :preset :realize-max)))
-                                       nil)}}})
+                                     'println println}}})
 
 (def ^:dynamic *debug* false)
 (defn debug [& args]
@@ -42,11 +30,7 @@
 (defn handle-error [last-error e]
   (sci/alter-var-root last-error (constantly e))
   (let [msg (ex-message e)]
-    (.write term (str "\r\n" msg))
-    (when (or (str/includes? msg "allow")
-              (str/includes? msg "realized"))
-      (.write term "Type (disable-safety!) to drop restrictions.")
-      (.write term "\r\n"))))
+    (.write term (str "\r\n" msg))))
 
 (defn print-val [v]
   (debug "print-val" (str v))

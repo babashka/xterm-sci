@@ -1,5 +1,6 @@
-{"dependencies": {
-  "local-echo": "babashka/local-echo",
-  "xterm": "^4.7.0"
+{
+  "dependencies": {
+    "local-echo": "babashka/local-echo",
+    "xterm": "^4.7.0"
   }
 }
