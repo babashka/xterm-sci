@@ -45,6 +45,13 @@ echo "gh-pages/" >> .gitignore
 git worktree add gh-pages gh-pages
 ```
 
+After cloning this repo to a new dir:
+
+```
+git fetch origin gh-pages
+git worktree add gh-pages gh-pages
+```
+
 To deploy to Github Pages:
 
 ```
