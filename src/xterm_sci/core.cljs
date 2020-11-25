@@ -14,7 +14,8 @@
 (defonce last-ns (atom @sci/ns))
 (defonce last-error (sci/new-dynamic-var '*e nil))
 (defonce ctx (atom nil))
-(defonce initial-opts {:classes {'js js/window}
+(defonce initial-opts {:classes {'js js/window
+                                 :allow :all}
                        :namespaces {'clojure.core
                                     {'*e last-error
                                      'prn prn
